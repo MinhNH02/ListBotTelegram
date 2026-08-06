@@ -51,3 +51,24 @@ def test_render_shopping_total_of_pending_only():
     assert "50.000đ" in text
     assert "Tổng cộng" in text
     assert len(keyboard.inline_keyboard) == 1  # chỉ Sữa còn nút
+
+
+def test_render_button_callback_data_format():
+    cfg = {"title": "📋 Công việc cần làm", "kind": "todo"}
+    tasks = [
+        {"id": 7, "content": "Việc A", "quantity": None,
+         "unit_price": None, "assignee": None, "status": "pending"},
+    ]
+    _, keyboard = render_list(cfg, tasks)
+    button = keyboard.inline_keyboard[0][0]
+    assert button.callback_data == "done:7"
+
+
+def test_render_escapes_html_in_message_text():
+    cfg = {"title": "📋 Công việc cần làm", "kind": "todo"}
+    tasks = [
+        {"id": 1, "content": "A & <B>", "quantity": None,
+         "unit_price": None, "assignee": None, "status": "pending"},
+    ]
+    text, _ = render_list(cfg, tasks)
+    assert "A &amp; &lt;B&gt;" in text
