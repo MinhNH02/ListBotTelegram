@@ -3,12 +3,6 @@ import html
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 
-def format_money(amount: float | None) -> str:
-    if amount is None:
-        return ""
-    return f"{int(round(amount)):,}".replace(",", ".") + "đ"
-
-
 def _line_todo(task) -> str:
     mark = "✅" if task["status"] == "done" else "⬜"
     content = html.escape(task["content"])
@@ -23,15 +17,8 @@ def _line_shopping(task) -> str:
     content = html.escape(task["content"])
     if task["status"] == "done":
         content = f"<s>{content}</s>"
-    qty = task["quantity"]
-    price = task["unit_price"]
-    detail = ""
-    if qty is not None and price is not None:
-        total = format_money(qty * price)
-        qty_str = f"{qty:g}"
-        detail = f" — {qty_str} × {format_money(price)} = {total}"
-    elif qty is not None:
-        detail = f" — SL {qty:g}"
+    description = task["description"]
+    detail = f" — {html.escape(description)}" if description else ""
     suffix = f" — @{html.escape(task['assignee'])}" if task["assignee"] else ""
     return f"{mark} {content}{detail}{suffix}"
 
@@ -53,15 +40,6 @@ def render_list(list_cfg: dict, tasks: list):
         lines.append(line_fn(task))
 
     pending = [t for t in tasks if t["status"] != "done"]
-
-    if kind == "shopping":
-        total = sum(
-            (t["quantity"] * t["unit_price"])
-            for t in pending
-            if t["quantity"] is not None and t["unit_price"] is not None
-        )
-        lines.append("")
-        lines.append(f"💰 Tổng cộng (chưa mua): {format_money(total)}")
 
     buttons = [
         [InlineKeyboardButton(f"✅ {_short(t['content'])}", callback_data=f"done:{t['id']}")]

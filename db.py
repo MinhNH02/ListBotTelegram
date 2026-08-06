@@ -23,8 +23,7 @@ def init_db() -> None:
                 chat_id INTEGER NOT NULL,
                 list_key TEXT NOT NULL,
                 content TEXT NOT NULL,
-                quantity REAL,
-                unit_price REAL,
+                description TEXT,
                 assignee TEXT,
                 creator_id INTEGER NOT NULL,
                 creator_name TEXT NOT NULL,
@@ -35,14 +34,16 @@ def init_db() -> None:
             )
             """
         )
+        columns = {row["name"] for row in conn.execute("PRAGMA table_info(tasks)")}
+        if "description" not in columns:
+            conn.execute("ALTER TABLE tasks ADD COLUMN description TEXT")
 
 
 def add_task(
     chat_id: int,
     list_key: str,
     content: str,
-    quantity: float | None,
-    unit_price: float | None,
+    description: str | None,
     assignee: str | None,
     creator_id: int,
     creator_name: str,
@@ -51,12 +52,12 @@ def add_task(
         cur = conn.execute(
             """
             INSERT INTO tasks
-                (chat_id, list_key, content, quantity, unit_price, assignee,
+                (chat_id, list_key, content, description, assignee,
                  creator_id, creator_name, status, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?)
             """,
             (
-                chat_id, list_key, content, quantity, unit_price, assignee,
+                chat_id, list_key, content, description, assignee,
                 creator_id, creator_name, _now(),
             ),
         )

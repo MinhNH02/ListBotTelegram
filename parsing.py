@@ -1,4 +1,3 @@
-import math
 from dataclasses import dataclass
 
 
@@ -6,8 +5,7 @@ from dataclasses import dataclass
 class ParsedTask:
     content: str
     assignee: str | None = None
-    quantity: float | None = None
-    unit_price: float | None = None
+    description: str | None = None
 
 
 def extract_assignee(arg: str) -> tuple[str | None, str]:
@@ -28,32 +26,14 @@ def parse_todo(arg: str) -> ParsedTask:
     return ParsedTask(content=content, assignee=assignee)
 
 
-def _parse_number(text: str, label: str) -> float:
-    cleaned = text.strip().replace(".", "").replace(",", ".")
-    try:
-        value = float(cleaned)
-    except ValueError:
-        raise ValueError(f"{label} phải là số.")
-    if not math.isfinite(value):
-        raise ValueError(f"{label} phải là số.")
-    return value
-
-
 def parse_shopping(arg: str) -> ParsedTask:
     assignee, rest = extract_assignee(arg)
-    parts = [p.strip() for p in rest.split("|")]
-    name = parts[0] if parts else ""
+    parts = rest.split("|", maxsplit=1)
+    name = parts[0].strip()
     if not name:
         raise ValueError("Tên hàng không được để trống.")
-    quantity = None
-    unit_price = None
-    if len(parts) >= 2 and parts[1]:
-        quantity = _parse_number(parts[1], "Số lượng")
-    if len(parts) >= 3 and parts[2]:
-        unit_price = _parse_number(parts[2], "Đơn giá")
-    return ParsedTask(
-        content=name, assignee=assignee, quantity=quantity, unit_price=unit_price
-    )
+    description = parts[1].strip() if len(parts) > 1 and parts[1].strip() else None
+    return ParsedTask(content=name, assignee=assignee, description=description)
 
 
 def get_arg_text(message_text: str) -> str:
