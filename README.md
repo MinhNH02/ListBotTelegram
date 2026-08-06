@@ -32,10 +32,8 @@ Sau đó thêm bot vào group và gõ `/help`.
 | `/list` | Xem việc cần làm |
 | `/list @an Mua cà phê` | Thêm việc, giao cho @an |
 | `/shopping` | Xem danh sách mua sắm |
-| `/shopping @an Sữa tươi \| 2 \| 25000` | Thêm món mua sắm |
+| `/shopping @an Mua ức gà \| 400g ức gà` | Thêm món mua sắm (mô tả tùy chọn) |
 | `/clear` | Xóa các mục đã xong |
-
-> Số lẻ dùng dấu phẩy: `0,5` = nửa đơn vị. Dấu chấm là ngăn cách hàng nghìn: `25.000` = 25000.
 
 Chỉ người được giao (@username) mới tick được việc của mình; việc chung thì người tạo tick.
 Muốn được giao việc, bạn cần đặt @username trong cài đặt Telegram.

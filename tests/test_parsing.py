@@ -34,58 +34,34 @@ def test_parse_todo_empty_raises():
         parse_todo("@an   ")
 
 
-def test_parse_shopping_full():
-    t = parse_shopping("@an Sữa tươi | 2 | 25000")
-    assert t.content == "Sữa tươi"
-    assert t.assignee == "an"
-    assert t.quantity == 2
-    assert t.unit_price == 25000
+def test_parse_shopping_with_description():
+    t = parse_shopping("@minh Mua ức gà | 400g ức gà")
+    assert t.content == "Mua ức gà"
+    assert t.assignee == "minh"
+    assert t.description == "400g ức gà"
 
 
 def test_parse_shopping_name_only():
     t = parse_shopping("Bánh mì")
     assert t.content == "Bánh mì"
-    assert t.quantity is None
-    assert t.unit_price is None
+    assert t.description is None
 
 
-def test_parse_shopping_strips_dot_thousands():
-    t = parse_shopping("Gạo | 1 | 25.000")
-    assert t.unit_price == 25000
-
-
-def test_parse_shopping_bad_number_raises():
-    with pytest.raises(ValueError):
-        parse_shopping("Táo | hai | 1000")
+def test_parse_shopping_description_can_contain_pipe():
+    t = parse_shopping("Mua đồ | 1 gói | còn dư thì để tủ lạnh")
+    assert t.content == "Mua đồ"
+    assert t.description == "1 gói | còn dư thì để tủ lạnh"
 
 
 def test_parse_shopping_empty_name_raises():
     with pytest.raises(ValueError):
-        parse_shopping("  |  | 1000")
+        parse_shopping("  | 400g ức gà")
 
 
 def test_get_arg_text():
     assert get_arg_text("/list @an Mua cà phê") == "@an Mua cà phê"
     assert get_arg_text("/list") == ""
     assert get_arg_text("/list@MyBot Dọn kho") == "Dọn kho"
-
-
-def test_parse_shopping_decimal_comma():
-    t = parse_shopping("Thịt | 0,5 | 100000")
-    assert t.quantity == 0.5
-    assert t.unit_price == 100000
-
-
-def test_parse_shopping_comma_decimal_with_dot_thousands():
-    t = parse_shopping("Gạo | 1,5 | 25.000")
-    assert t.quantity == 1.5
-    assert t.unit_price == 25000
-
-
-def test_parse_shopping_rejects_non_finite():
-    import pytest
-    with pytest.raises(ValueError):
-        parse_shopping("X | inf | 1000")
 
 
 def test_parse_lines_single_line_todo():
@@ -106,13 +82,14 @@ def test_parse_lines_multi_line_todo_mixed_assignee():
 
 
 def test_parse_lines_multi_line_shopping():
-    arg = "@an Sữa tươi | 2 | 25000\nTrứng gà | 10 | 3000"
+    arg = "@an Mua ức gà | 400g ức gà\nTrứng gà"
     tasks, errors = parse_lines(arg, "shopping")
-    assert tasks[0].content == "Sữa tươi"
+    assert tasks[0].content == "Mua ức gà"
     assert tasks[0].assignee == "an"
-    assert tasks[0].quantity == 2
+    assert tasks[0].description == "400g ức gà"
     assert tasks[1].content == "Trứng gà"
     assert tasks[1].assignee is None
+    assert tasks[1].description is None
     assert errors == []
 
 
@@ -124,7 +101,7 @@ def test_parse_lines_skips_blank_lines():
 
 
 def test_parse_lines_reports_error_with_line_number_when_multiple():
-    arg = "@an Mua cà phê\nTáo | hai | 1000\n@minh Gọi khách hàng"
+    arg = "@an Mua cà phê\n | 400g ức gà\n@minh Gọi khách hàng"
     tasks, errors = parse_lines(arg, "shopping")
     assert len(tasks) == 2  # dòng 1 và dòng 3 hợp lệ
     assert len(errors) == 1
@@ -132,14 +109,14 @@ def test_parse_lines_reports_error_with_line_number_when_multiple():
 
 
 def test_parse_lines_single_line_error_has_no_line_prefix():
-    tasks, errors = parse_lines("Táo | hai | 1000", "shopping")
+    tasks, errors = parse_lines(" | 400g ức gà", "shopping")
     assert tasks == []
     assert len(errors) == 1
     assert not errors[0].startswith("Dòng")
 
 
 def test_parse_lines_all_lines_invalid():
-    arg = "Táo | hai | 1000\nCam | ba | 2000"
+    arg = " | mô tả 1\n | mô tả 2"
     tasks, errors = parse_lines(arg, "shopping")
     assert tasks == []
     assert len(errors) == 2

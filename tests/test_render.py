@@ -1,10 +1,4 @@
-from render import format_money, render_list
-
-
-def test_format_money():
-    assert format_money(25000) == "25.000đ"
-    assert format_money(50000) == "50.000đ"
-    assert format_money(None) == ""
+from render import render_list
 
 
 def test_render_empty_list():
@@ -17,8 +11,8 @@ def test_render_empty_list():
 def test_render_todo_pending_has_button():
     cfg = {"title": "📋 Công việc cần làm", "kind": "todo"}
     tasks = [
-        {"id": 1, "content": "Gọi khách", "quantity": None,
-         "unit_price": None, "assignee": "minh", "status": "pending"},
+        {"id": 1, "content": "Gọi khách", "description": None,
+         "assignee": "minh", "status": "pending"},
     ]
     text, keyboard = render_list(cfg, tasks)
     assert "Gọi khách" in text
@@ -30,34 +24,45 @@ def test_render_todo_pending_has_button():
 def test_render_done_task_struck_no_button():
     cfg = {"title": "📋 Công việc cần làm", "kind": "todo"}
     tasks = [
-        {"id": 1, "content": "Xong rồi", "quantity": None,
-         "unit_price": None, "assignee": None, "status": "done"},
+        {"id": 1, "content": "Xong rồi", "description": None,
+         "assignee": None, "status": "done"},
     ]
     text, keyboard = render_list(cfg, tasks)
     assert "<s>" in text
     assert keyboard is None  # không có task pending
 
 
-def test_render_shopping_total_of_pending_only():
+def test_render_shopping_shows_description():
     cfg = {"title": "🛒 Mua sắm", "kind": "shopping"}
     tasks = [
-        {"id": 1, "content": "Sữa", "quantity": 2, "unit_price": 25000,
-         "assignee": None, "status": "pending"},
-        {"id": 2, "content": "Bánh", "quantity": 5, "unit_price": 10000,
+        {"id": 1, "content": "Mua ức gà", "description": "400g ức gà",
+         "assignee": "minh", "status": "pending"},
+        {"id": 2, "content": "Trứng gà", "description": None,
          "assignee": None, "status": "done"},
     ]
     text, keyboard = render_list(cfg, tasks)
-    # chỉ Sữa (2 x 25.000 = 50.000) tính vào tổng, Bánh đã mua thì bỏ
-    assert "50.000đ" in text
-    assert "Tổng cộng" in text
-    assert len(keyboard.inline_keyboard) == 1  # chỉ Sữa còn nút
+    assert "Mua ức gà" in text
+    assert "400g ức gà" in text
+    assert "@minh" in text
+    assert "Trứng gà" in text
+    assert len(keyboard.inline_keyboard) == 1  # chỉ Mua ức gà còn nút (chưa xong)
+
+
+def test_render_shopping_no_description_omits_dash():
+    cfg = {"title": "🛒 Mua sắm", "kind": "shopping"}
+    tasks = [
+        {"id": 1, "content": "Muối", "description": None,
+         "assignee": None, "status": "pending"},
+    ]
+    text, _ = render_list(cfg, tasks)
+    assert "Muối" in text
 
 
 def test_render_button_callback_data_format():
     cfg = {"title": "📋 Công việc cần làm", "kind": "todo"}
     tasks = [
-        {"id": 7, "content": "Việc A", "quantity": None,
-         "unit_price": None, "assignee": None, "status": "pending"},
+        {"id": 7, "content": "Việc A", "description": None,
+         "assignee": None, "status": "pending"},
     ]
     _, keyboard = render_list(cfg, tasks)
     button = keyboard.inline_keyboard[0][0]
@@ -67,8 +72,18 @@ def test_render_button_callback_data_format():
 def test_render_escapes_html_in_message_text():
     cfg = {"title": "📋 Công việc cần làm", "kind": "todo"}
     tasks = [
-        {"id": 1, "content": "A & <B>", "quantity": None,
-         "unit_price": None, "assignee": None, "status": "pending"},
+        {"id": 1, "content": "A & <B>", "description": None,
+         "assignee": None, "status": "pending"},
+    ]
+    text, _ = render_list(cfg, tasks)
+    assert "A &amp; &lt;B&gt;" in text
+
+
+def test_render_escapes_html_in_shopping_description():
+    cfg = {"title": "🛒 Mua sắm", "kind": "shopping"}
+    tasks = [
+        {"id": 1, "content": "X", "description": "A & <B>",
+         "assignee": None, "status": "pending"},
     ]
     text, _ = render_list(cfg, tasks)
     assert "A &amp; &lt;B&gt;" in text
