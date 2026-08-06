@@ -39,3 +39,16 @@ Sau đó thêm bot vào group và gõ `/help`.
 
 Chỉ người được giao (@username) mới tick được việc của mình; việc chung thì người tạo tick.
 Muốn được giao việc, bạn cần đặt @username trong cài đặt Telegram.
+
+### Thêm nhiều việc cùng lúc
+
+Xuống dòng sau lệnh, mỗi dòng là một việc:
+
+```
+/list
+@an Mua cà phê
+@minh Gọi khách hàng
+Dọn kho
+```
+
+Áp dụng cho cả `/list` và `/shopping`. Dòng nào lỗi cú pháp sẽ được báo riêng, các dòng đúng vẫn được thêm bình thường.
