@@ -21,8 +21,7 @@ HELP_TEXT = (
     "• Thêm nhiều việc cùng lúc: xuống dòng, mỗi dòng 1 việc\n\n"
     "🛒 <b>Mua sắm</b>\n"
     "• <code>/shopping</code> — xem danh sách mua sắm\n"
-    "• <code>/shopping @an Tên hàng | số lượng | đơn giá</code> — thêm món\n"
-    "  (số lượng và đơn giá có thể bỏ trống)\n\n"
+    "• <code>/shopping @an Tên hàng | mô tả</code> — thêm món (mô tả tùy chọn)\n"
     "✅ Bấm nút để đánh dấu xong. Chỉ người được giao (@username) mới tick "
     "được; việc chung thì người tạo tick.\n"
     "🧹 <code>/clear</code> — xóa các mục đã xong.\n\n"
@@ -61,8 +60,7 @@ def _make_list_handler(list_key: str):
                 chat_id=update.effective_chat.id,
                 list_key=list_key,
                 content=parsed.content,
-                quantity=parsed.quantity,
-                unit_price=parsed.unit_price,
+                description=parsed.description,
                 assignee=parsed.assignee,
                 creator_id=user.id,
                 creator_name=user.username or user.full_name,
