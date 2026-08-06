@@ -59,3 +59,20 @@ def parse_shopping(arg: str) -> ParsedTask:
 def get_arg_text(message_text: str) -> str:
     parts = message_text.split(maxsplit=1)
     return parts[1].strip() if len(parts) > 1 else ""
+
+
+def parse_lines(arg: str, kind: str) -> tuple[list[ParsedTask], list[str]]:
+    lines = [line.strip() for line in arg.split("\n")]
+    lines = [line for line in lines if line]
+    multi = len(lines) > 1
+    parse_fn = parse_shopping if kind == "shopping" else parse_todo
+
+    tasks: list[ParsedTask] = []
+    errors: list[str] = []
+    for i, line in enumerate(lines, start=1):
+        try:
+            tasks.append(parse_fn(line))
+        except ValueError as err:
+            prefix = f"Dòng {i}: " if multi else ""
+            errors.append(f"{prefix}{err}")
+    return tasks, errors

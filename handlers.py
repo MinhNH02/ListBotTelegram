@@ -9,7 +9,7 @@ from telegram.ext import (
 
 import config
 import db
-from parsing import get_arg_text, parse_shopping, parse_todo
+from parsing import get_arg_text, parse_lines
 from permissions import can_tick
 from render import render_list
 
@@ -17,7 +17,8 @@ HELP_TEXT = (
     "<b>Bot Công việc & Mua sắm</b>\n\n"
     "📋 <b>Công việc</b>\n"
     "• <code>/list</code> — xem danh sách việc\n"
-    "• <code>/list @an Nội dung việc</code> — thêm việc (bỏ @an = việc chung)\n\n"
+    "• <code>/list @an Nội dung việc</code> — thêm việc (bỏ @an = việc chung)\n"
+    "• Thêm nhiều việc cùng lúc: xuống dòng, mỗi dòng 1 việc\n\n"
     "🛒 <b>Mua sắm</b>\n"
     "• <code>/shopping</code> — xem danh sách mua sắm\n"
     "• <code>/shopping @an Tên hàng | số lượng | đơn giá</code> — thêm món\n"
@@ -50,22 +51,27 @@ def _make_list_handler(list_key: str):
         if not arg:
             await _show_list(update, list_key)
             return
-        try:
-            parsed = parse_shopping(arg) if kind == "shopping" else parse_todo(arg)
-        except ValueError as err:
-            await update.message.reply_text(f"⚠️ {err}")
+        tasks, errors = parse_lines(arg, kind)
+        if not tasks:
+            await update.message.reply_text("⚠️ " + "\n".join(errors))
             return
         user = update.effective_user
-        db.add_task(
-            chat_id=update.effective_chat.id,
-            list_key=list_key,
-            content=parsed.content,
-            quantity=parsed.quantity,
-            unit_price=parsed.unit_price,
-            assignee=parsed.assignee,
-            creator_id=user.id,
-            creator_name=user.username or user.full_name,
-        )
+        for parsed in tasks:
+            db.add_task(
+                chat_id=update.effective_chat.id,
+                list_key=list_key,
+                content=parsed.content,
+                quantity=parsed.quantity,
+                unit_price=parsed.unit_price,
+                assignee=parsed.assignee,
+                creator_id=user.id,
+                creator_name=user.username or user.full_name,
+            )
+        if errors:
+            await update.message.reply_text(
+                "⚠️ Một số dòng bị lỗi, các dòng còn lại đã được thêm:\n"
+                + "\n".join(errors)
+            )
         await _show_list(update, list_key)
 
     return handler

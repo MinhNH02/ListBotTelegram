@@ -4,6 +4,7 @@ from parsing import (
     ParsedTask,
     extract_assignee,
     get_arg_text,
+    parse_lines,
     parse_shopping,
     parse_todo,
 )
@@ -85,3 +86,60 @@ def test_parse_shopping_rejects_non_finite():
     import pytest
     with pytest.raises(ValueError):
         parse_shopping("X | inf | 1000")
+
+
+def test_parse_lines_single_line_todo():
+    tasks, errors = parse_lines("@an Mua cà phê", "todo")
+    assert tasks == [ParsedTask(content="Mua cà phê", assignee="an")]
+    assert errors == []
+
+
+def test_parse_lines_multi_line_todo_mixed_assignee():
+    arg = "@an Mua cà phê\n@minh Gọi khách hàng\nDọn kho"
+    tasks, errors = parse_lines(arg, "todo")
+    assert tasks == [
+        ParsedTask(content="Mua cà phê", assignee="an"),
+        ParsedTask(content="Gọi khách hàng", assignee="minh"),
+        ParsedTask(content="Dọn kho", assignee=None),
+    ]
+    assert errors == []
+
+
+def test_parse_lines_multi_line_shopping():
+    arg = "@an Sữa tươi | 2 | 25000\nTrứng gà | 10 | 3000"
+    tasks, errors = parse_lines(arg, "shopping")
+    assert tasks[0].content == "Sữa tươi"
+    assert tasks[0].assignee == "an"
+    assert tasks[0].quantity == 2
+    assert tasks[1].content == "Trứng gà"
+    assert tasks[1].assignee is None
+    assert errors == []
+
+
+def test_parse_lines_skips_blank_lines():
+    arg = "@an Mua cà phê\n\n   \nDọn kho"
+    tasks, errors = parse_lines(arg, "todo")
+    assert len(tasks) == 2
+    assert errors == []
+
+
+def test_parse_lines_reports_error_with_line_number_when_multiple():
+    arg = "@an Mua cà phê\nTáo | hai | 1000\n@minh Gọi khách hàng"
+    tasks, errors = parse_lines(arg, "shopping")
+    assert len(tasks) == 2  # dòng 1 và dòng 3 hợp lệ
+    assert len(errors) == 1
+    assert errors[0].startswith("Dòng 2:")
+
+
+def test_parse_lines_single_line_error_has_no_line_prefix():
+    tasks, errors = parse_lines("Táo | hai | 1000", "shopping")
+    assert tasks == []
+    assert len(errors) == 1
+    assert not errors[0].startswith("Dòng")
+
+
+def test_parse_lines_all_lines_invalid():
+    arg = "Táo | hai | 1000\nCam | ba | 2000"
+    tasks, errors = parse_lines(arg, "shopping")
+    assert tasks == []
+    assert len(errors) == 2
