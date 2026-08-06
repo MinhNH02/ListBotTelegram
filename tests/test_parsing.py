@@ -67,3 +67,21 @@ def test_get_arg_text():
     assert get_arg_text("/list @an Mua cà phê") == "@an Mua cà phê"
     assert get_arg_text("/list") == ""
     assert get_arg_text("/list@MyBot Dọn kho") == "Dọn kho"
+
+
+def test_parse_shopping_decimal_comma():
+    t = parse_shopping("Thịt | 0,5 | 100000")
+    assert t.quantity == 0.5
+    assert t.unit_price == 100000
+
+
+def test_parse_shopping_comma_decimal_with_dot_thousands():
+    t = parse_shopping("Gạo | 1,5 | 25.000")
+    assert t.quantity == 1.5
+    assert t.unit_price == 25000
+
+
+def test_parse_shopping_rejects_non_finite():
+    import pytest
+    with pytest.raises(ValueError):
+        parse_shopping("X | inf | 1000")

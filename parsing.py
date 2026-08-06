@@ -1,3 +1,4 @@
+import math
 from dataclasses import dataclass
 
 
@@ -28,11 +29,14 @@ def parse_todo(arg: str) -> ParsedTask:
 
 
 def _parse_number(text: str, label: str) -> float:
-    cleaned = text.replace(".", "").replace(",", "").strip()
+    cleaned = text.strip().replace(".", "").replace(",", ".")
     try:
-        return float(cleaned)
+        value = float(cleaned)
     except ValueError:
         raise ValueError(f"{label} phải là số.")
+    if not math.isfinite(value):
+        raise ValueError(f"{label} phải là số.")
+    return value
 
 
 def parse_shopping(arg: str) -> ParsedTask:
